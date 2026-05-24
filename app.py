@@ -67,18 +67,19 @@ label {
 
 </style>
 """, unsafe_allow_html=True)
+
 MODEL_NAME = "dmis-lab/biobert-base-cased-v1.1"
 
 tokenizer = AutoTokenizer.from_pretrained(
-    MODEL_NAME
+    MODEL_NAME,
+    use_fast=False
 )
 
 model = AutoModelForTokenClassification.from_pretrained(
     MODEL_NAME,
-    num_labels=2
+    num_labels=2,
+    ignore_mismatched_sizes=True
 )
-
-model.eval()
 
 model.eval()
 
@@ -122,7 +123,7 @@ if st.button("Analyze Clinical Text"):
         dim=-1
     )
 
-    prediction_ids = predictions[0].tolist()
+    prediction_ids = predictions[0].detach().cpu().tolist()
 
     tokens = tokenizer.convert_ids_to_tokens(
         inputs["input_ids"][0]
@@ -138,6 +139,7 @@ if st.button("Analyze Clinical Text"):
 
     result_html = """
     <html>
+
     <head>
 
     <style>
@@ -259,6 +261,7 @@ if st.button("Analyze Clinical Text"):
     </div>
 
     </body>
+
     </html>
     """
 
