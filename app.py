@@ -72,7 +72,7 @@ st.markdown("""
 
 st.markdown("""
 <div class="sub-text">
-Clinical NLP based Disease Entity Recognition using Transformers
+Advanced Biomedical Disease Entity Recognition using Clinical NLP
 </div>
 """, unsafe_allow_html=True)
 
@@ -81,7 +81,7 @@ def load_model():
 
     ner_pipeline = pipeline(
         "ner",
-        model="Clinical-AI-Apollo/Medical-NER",
+        model="d4data/biomedical-ner-all",
         aggregation_strategy="simple"
     )
 
@@ -100,28 +100,31 @@ if st.button("Analyze Clinical Text"):
 
     detected_entities = []
 
-    for item in results:
-
-        entity_word = item["word"].replace("##", "").lower()
-
-        detected_entities.append(entity_word)
-
-    fake_entities = [
+    ignore_words = [
         "and",
         "or",
         "the",
-        "is",
         "from",
         "with",
+        "patient",
         "he",
         "she",
-        "patient"
+        "is",
+        "was",
+        "are"
     ]
 
-    detected_entities = [
-        word for word in detected_entities
-        if word not in fake_entities
-    ]
+    for item in results:
+
+        entity = item["word"]
+
+        entity = entity.replace("##", "")
+
+        entity = entity.lower()
+
+        if entity not in ignore_words:
+
+            detected_entities.append(entity)
 
     words = text.split()
 
@@ -205,7 +208,11 @@ if st.button("Analyze Clinical Text"):
 
     for word in words:
 
-        clean_word = word.lower().replace(",", "").replace(".", "")
+        clean_word = word.lower()
+
+        clean_word = clean_word.replace(",", "")
+
+        clean_word = clean_word.replace(".", "")
 
         if clean_word in detected_entities:
 
