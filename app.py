@@ -76,10 +76,10 @@ BioBERT-based Disease Entity Recognition using Clinical NLP
 def load_model():
 
     ner_pipeline = pipeline(
-        "ner",
-        model="d4data/biomedical-ner-all",
-        aggregation_strategy="simple"
-    )
+    "ner",
+    model="alvaroalon2/biobert_diseases_ner",
+    aggregation_strategy="simple"
+)
 
     return ner_pipeline
 
