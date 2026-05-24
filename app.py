@@ -1,6 +1,5 @@
 import streamlit as st
 import streamlit.components.v1 as components
-import torch
 
 from transformers import pipeline
 
@@ -13,48 +12,53 @@ st.set_page_config(
 st.markdown("""
 <style>
 
-.stApp {
-    background: linear-gradient(to bottom, #f4f9ff, #e8f1ff);
+.stApp{
+    background:linear-gradient(to bottom,#f4f9ff,#e8f1ff);
 }
 
-.main-title {
-    color: black;
-    text-align: center;
-    font-size: 42px;
-    font-weight: 800;
-    margin-bottom: 10px;
+.main-title{
+    color:black;
+    text-align:center;
+    font-size:42px;
+    font-weight:800;
+    margin-bottom:10px;
 }
 
-.sub-text {
-    color: black;
-    text-align: center;
-    font-size: 18px;
-    margin-bottom: 30px;
+.sub-text{
+    color:black;
+    text-align:center;
+    font-size:18px;
+    margin-bottom:30px;
 }
 
-label {
-    color: black !important;
-    font-weight: bold;
+label{
+    color:black !important;
+    font-weight:bold;
 }
 
-.stTextArea textarea {
-    background-color: white;
-    color: black;
-    border-radius: 12px;
-    border: 2px solid #90caf9;
-    padding: 12px;
-    font-size: 16px;
+.stTextArea textarea{
+    background-color:white;
+    color:black;
+    border-radius:12px;
+    border:2px solid #90caf9;
+    padding:12px;
+    font-size:16px;
 }
 
-.stButton button {
-    background-color: #1976d2;
-    color: white;
-    border-radius: 10px;
-    border: none;
-    padding: 10px 20px;
-    font-size: 16px;
-    font-weight: bold;
-    width: 100%;
+.stButton button{
+    background-color:#1976d2;
+    color:white;
+    border-radius:10px;
+    border:none;
+    padding:10px 20px;
+    font-size:16px;
+    font-weight:bold;
+    width:100%;
+}
+
+.stButton button:hover{
+    background-color:#1565c0;
+    color:white;
 }
 
 </style>
@@ -68,7 +72,7 @@ st.markdown("""
 
 st.markdown("""
 <div class="sub-text">
-BioBERT-based Disease Entity Recognition using Clinical NLP
+Clinical NLP based Disease Entity Recognition using Transformers
 </div>
 """, unsafe_allow_html=True)
 
@@ -76,10 +80,10 @@ BioBERT-based Disease Entity Recognition using Clinical NLP
 def load_model():
 
     ner_pipeline = pipeline(
-    "ner",
-    model="alvaroalon2/biobert_diseases_ner",
-    aggregation_strategy="simple"
-)
+        "ner",
+        model="Clinical-AI-Apollo/Medical-NER",
+        aggregation_strategy="simple"
+    )
 
     return ner_pipeline
 
@@ -87,7 +91,7 @@ ner = load_model()
 
 text = st.text_area(
     "Enter Clinical Text",
-    "the patient suffers from lung cancer and diabetes"
+    "the patient suffers from lung cancer and diabetes and fever"
 )
 
 if st.button("Analyze Clinical Text"):
@@ -98,9 +102,26 @@ if st.button("Analyze Clinical Text"):
 
     for item in results:
 
-        detected_entities.append(
-            item["word"].lower()
-        )
+        entity_word = item["word"].replace("##", "").lower()
+
+        detected_entities.append(entity_word)
+
+    fake_entities = [
+        "and",
+        "or",
+        "the",
+        "is",
+        "from",
+        "with",
+        "he",
+        "she",
+        "patient"
+    ]
+
+    detected_entities = [
+        word for word in detected_entities
+        if word not in fake_entities
+    ]
 
     words = text.split()
 
@@ -184,7 +205,7 @@ if st.button("Analyze Clinical Text"):
 
     for word in words:
 
-        clean_word = word.lower()
+        clean_word = word.lower().replace(",", "").replace(".", "")
 
         if clean_word in detected_entities:
 
