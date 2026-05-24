@@ -2,10 +2,7 @@ import streamlit as st
 import streamlit.components.v1 as components
 import torch
 
-from transformers import (
-    AutoTokenizer,
-    AutoModelForTokenClassification
-)
+from transformers import pipeline
 
 st.set_page_config(
     page_title="Biomedical NER Research System",
@@ -60,33 +57,8 @@ label {
     width: 100%;
 }
 
-.stButton button:hover {
-    background-color: #1565c0;
-    color: white;
-}
-
 </style>
 """, unsafe_allow_html=True)
-
-MODEL_NAME = "dmis-lab/biobert-base-cased-v1.1"
-
-tokenizer = AutoTokenizer.from_pretrained(
-    MODEL_NAME,
-    use_fast=False
-)
-
-model = AutoModelForTokenClassification.from_pretrained(
-    MODEL_NAME,
-    num_labels=2,
-    ignore_mismatched_sizes=True
-)
-
-model.eval()
-
-id2label = {
-    0: "O",
-    1: "DISEASE"
-}
 
 st.markdown("""
 <div class="main-title">
@@ -100,6 +72,19 @@ BioBERT-based Disease Entity Recognition using Clinical NLP
 </div>
 """, unsafe_allow_html=True)
 
+@st.cache_resource
+def load_model():
+
+    ner_pipeline = pipeline(
+        "ner",
+        model="d4data/biomedical-ner-all",
+        aggregation_strategy="simple"
+    )
+
+    return ner_pipeline
+
+ner = load_model()
+
 text = st.text_area(
     "Enter Clinical Text",
     "the patient suffers from lung cancer and diabetes"
@@ -107,35 +92,17 @@ text = st.text_area(
 
 if st.button("Analyze Clinical Text"):
 
-    inputs = tokenizer(
-        text,
-        return_tensors="pt",
-        truncation=True,
-        padding=True
-    )
+    results = ner(text)
 
-    with torch.no_grad():
+    detected_entities = []
 
-        outputs = model(**inputs)
+    for item in results:
 
-    predictions = torch.argmax(
-        outputs.logits,
-        dim=-1
-    )
-
-    prediction_ids = predictions[0].detach().cpu().tolist()
-
-    tokens = tokenizer.convert_ids_to_tokens(
-        inputs["input_ids"][0]
-    )
-
-    predicted_labels = []
-
-    for p in prediction_ids:
-
-        predicted_labels.append(
-            id2label[p]
+        detected_entities.append(
+            item["word"].lower()
         )
+
+    words = text.split()
 
     result_html = """
     <html>
@@ -215,47 +182,45 @@ if st.button("Analyze Clinical Text"):
     <div class="container">
     """
 
-    for token, label in zip(tokens, predicted_labels):
+    for word in words:
 
-        if token not in ["[CLS]", "[SEP]", "[PAD]"]:
+        clean_word = word.lower()
 
-            clean_token = token.replace("##", "")
+        if clean_word in detected_entities:
 
-            if label == "DISEASE":
+            result_html += f"""
+            <div class="disease-box">
 
-                result_html += f"""
-                <div class="disease-box">
+                🔴
 
-                    🔴
-
-                    <div class="disease-token">
-                    {clean_token}
-                    </div>
-
-                    <div class="label">
-                    Disease
-                    </div>
-
+                <div class="disease-token">
+                {word}
                 </div>
-                """
 
-            else:
-
-                result_html += f"""
-                <div class="normal-box">
-
-                    🔵
-
-                    <div class="normal-token">
-                    {clean_token}
-                    </div>
-
-                    <div class="label">
-                    Normal
-                    </div>
-
+                <div class="label">
+                Disease Entity
                 </div>
-                """
+
+            </div>
+            """
+
+        else:
+
+            result_html += f"""
+            <div class="normal-box">
+
+                🔵
+
+                <div class="normal-token">
+                {word}
+                </div>
+
+                <div class="label">
+                Normal
+                </div>
+
+            </div>
+            """
 
     result_html += """
     </div>
