@@ -72,7 +72,7 @@ st.markdown("""
 
 st.markdown("""
 <div class="sub-text">
-Advanced Biomedical Disease Entity Recognition using Clinical NLP
+Clinical NLP Disease Entity Recognition using Medical Transformers
 </div>
 """, unsafe_allow_html=True)
 
@@ -80,8 +80,8 @@ Advanced Biomedical Disease Entity Recognition using Clinical NLP
 def load_model():
 
     ner_pipeline = pipeline(
-        "token-classification",
-        model="d4data/biomedical-ner-all",
+        "ner",
+        model="Clinical-AI-Apollo/Medical-NER",
         aggregation_strategy="simple"
     )
 
@@ -98,29 +98,36 @@ if st.button("Analyze Clinical Text"):
 
     results = ner(text)
 
-    disease_entities = []
+    detected_entities = []
 
-    allowed_labels = [
-        "DISEASE",
-        "Disease",
-        "disease"
+    for item in results:
+
+        entity_word = item["word"]
+
+        entity_word = entity_word.replace("##", "")
+
+        entity_word = entity_word.lower()
+
+        detected_entities.append(entity_word)
+
+    ignore_words = [
+        "and",
+        "or",
+        "the",
+        "is",
+        "are",
+        "was",
+        "with",
+        "from",
+        "patient",
+        "common",
+        "dangerous"
     ]
 
-    for entity in results:
-
-        entity_group = str(entity.get("entity_group", "")).lower()
-
-        if "disease" in entity_group:
-
-            word = entity["word"]
-
-            word = word.replace("##", "")
-
-            word = word.lower()
-
-            disease_entities.append(word)
-
-    disease_entities = list(set(disease_entities))
+    detected_entities = [
+        word for word in detected_entities
+        if word not in ignore_words
+    ]
 
     words = text.split()
 
@@ -210,7 +217,7 @@ if st.button("Analyze Clinical Text"):
 
         clean_word = clean_word.replace(".", "")
 
-        if clean_word in disease_entities:
+        if clean_word in detected_entities:
 
             result_html += f"""
             <div class="disease-box">
