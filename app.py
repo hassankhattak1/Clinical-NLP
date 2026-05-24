@@ -80,7 +80,7 @@ Advanced Biomedical Disease Entity Recognition using Clinical NLP
 def load_model():
 
     ner_pipeline = pipeline(
-        "ner",
+        "token-classification",
         model="d4data/biomedical-ner-all",
         aggregation_strategy="simple"
     )
@@ -91,40 +91,36 @@ ner = load_model()
 
 text = st.text_area(
     "Enter Clinical Text",
-    "the patient suffers from lung cancer and diabetes and fever"
+    "covid and diabetes are dangerous diseases and fever is common"
 )
 
 if st.button("Analyze Clinical Text"):
 
     results = ner(text)
 
-    detected_entities = []
+    disease_entities = []
 
-    ignore_words = [
-        "and",
-        "or",
-        "the",
-        "from",
-        "with",
-        "patient",
-        "he",
-        "she",
-        "is",
-        "was",
-        "are"
+    allowed_labels = [
+        "DISEASE",
+        "Disease",
+        "disease"
     ]
 
-    for item in results:
+    for entity in results:
 
-        entity = item["word"]
+        entity_group = str(entity.get("entity_group", "")).lower()
 
-        entity = entity.replace("##", "")
+        if "disease" in entity_group:
 
-        entity = entity.lower()
+            word = entity["word"]
 
-        if entity not in ignore_words:
+            word = word.replace("##", "")
 
-            detected_entities.append(entity)
+            word = word.lower()
+
+            disease_entities.append(word)
+
+    disease_entities = list(set(disease_entities))
 
     words = text.split()
 
@@ -214,7 +210,7 @@ if st.button("Analyze Clinical Text"):
 
         clean_word = clean_word.replace(".", "")
 
-        if clean_word in detected_entities:
+        if clean_word in disease_entities:
 
             result_html += f"""
             <div class="disease-box">
